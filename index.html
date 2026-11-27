@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Біздің айналамыздағы ақпарат — Интерактивті тест</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #ecfdf5 100%);
+            min-height: 100vh;
+        }
+        .fade-in {
+            animation: fadeIn 0.35s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-800">
+
+    <!-- =====================================================================
+         МҰҒАЛІМГЕ АРНАЛҒАН ЖЫЛДАМ БАПТАУ (КОД ІШІНЕН ТІКЕЛЕЙ ОРНАТУ ҮШІН):
+         Төмендегі DEFAULT_GOOGLE_SCRIPT_URL айнымалысына өз Google Apps Script
+         сілтемеңізді қойсаңыз, файлды оқушыларға таратқанда бәрінде автоматты
+         түрде жұмыс істейді (немесе жоғарғы оң жақтағы баптау батырмасын басыңыз).
+    ====================================================================== -->
+    <script>
+        const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLVwYiXEloWUcWTiFp_G-y84g9AO4lwp0G9iM8sioF5Ycy1iqroF_IwiPDZ6LYSDt_/exec"; // Мысалы: "https://script.google.com/macros/s/AKfycbx.../exec"
+    </script>
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-30 bg-white/85 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 shrink-0">
+                    <i data-lucide="cpu" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600 block">Информатика • Тапсырма 2</span>
+                    <h1 class="text-sm sm:text-base font-bold text-slate-900 leading-tight">Біздің айналамыздағы ақпарат</h1>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Live Timer Pill (Visible during quiz) -->
+                <div id="timerBadge" class="hidden items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-semibold text-sm shadow-inner">
+                    <i data-lucide="clock" class="w-4 h-4 text-indigo-600 animate-pulse"></i>
+                    <span>Уақыт: <span id="timerDisplay" class="font-mono font-bold">00:00</span></span>
+                </div>
+
+                <!-- Teacher Settings Button -->
+                <button onclick="openTeacherModal()" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition active:scale-95" title="Мұғалім баптаулары және Google Кесте">
+                    <i data-lucide="table-2" class="w-4 h-4 text-emerald-600"></i>
+                    <span class="hidden sm:inline">Мұғалім баптаулары</span>
+                    <span id="connectionDot" class="w-2 h-2 rounded-full bg-amber-400" title="Google Кесте күйі"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+
+        <!-- Custom Toast Notification Box (No alert() used) -->
+        <div id="toastBox" class="fixed bottom-5 right-5 z-50 hidden max-w-sm bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-3 fade-in">
+            <i id="toastIcon" data-lucide="info" class="w-5 h-5 text-emerald-400 shrink-0"></i>
+            <p id="toastMessage" class="text-sm font-medium"></p>
+        </div>
+
+        <!-- =========================================================
+             SCREEN 1: STUDENT ENTRY / WELCOME CARD
+        ========================================================== -->
+        <section id="startScreen" class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden fade-in">
+            <div class="bg-gradient-to-r from-indigo-600 via-indigo-700 to-emerald-600 px-6 sm:px-10 py-8 text-white">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-xs font-medium mb-4">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    <span>Интерактивті бағалау тапсырмасы</span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">Біздің айналамыздағы ақпарат</h2>
+                <p class="text-indigo-100 text-sm sm:text-base max-w-xl leading-relaxed">
+                    Бұл тест 4 түрлі форматтағы тапсырмалардан тұрады. Бастау батырмасын басқан сәттен бастап уақыт есептеледі және нәтижеңіз мұғалімнің Google кестесіне жолданады.
+                </p>
+            </div>
+
+            <div class="p-6 sm:p-10 space-y-6">
+                <!-- Task Structure Preview -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
+                        <span class="text-xs font-bold text-indigo-600 block">1-тапсырма</span>
+                        <span class="text-xs text-slate-600 font-medium">Таңдау тесті</span>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
+                        <span class="text-xs font-bold text-emerald-600 block">2-тапсырма</span>
+                        <span class="text-xs text-slate-600 font-medium">Сәйкестендіру</span>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
+                        <span class="text-xs font-bold text-amber-600 block">3-тапсырма</span>
+                        <span class="text-xs text-slate-600 font-medium">Дұрыс / Бұрыс</span>
+                    </div>
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/70 text-center">
+                        <span class="text-xs font-bold text-purple-600 block">4-тапсырма</span>
+                        <span class="text-xs text-slate-600 font-medium">Қысқа жауап</span>
+                    </div>
+                </div>
+
+                <!-- Student Input Form -->
+                <form id="studentForm" onsubmit="startQuiz(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="sm:col-span-2">
+                            <label for="studentName" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                                Оқушының аты-жөні <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+                                <input type="text" id="studentName" required placeholder="Мысалы: Әлихан Нұрланұлы"
+                                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition text-slate-800 bg-white">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="studentClass" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                                Сыныбы <span class="text-rose-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <i data-lucide="graduation-cap" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+                                <input type="text" id="studentClass" required placeholder="Мысалы: 5 «А»"
+                                    class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition text-slate-800 bg-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-700 hover:to-emerald-700 text-white font-bold text-base shadow-lg shadow-indigo-200/80 transition transform active:scale-[0.99] flex items-center justify-center gap-2">
+                            <span>Тестті бастау</span>
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SCREEN 2: INTERACTIVE QUIZ QUESTIONS (4 FORMATS)
+        ========================================================== -->
+        <section id="quizScreen" class="hidden space-y-6 fade-in">
+            <!-- Student Info & Progress Banner -->
+            <div class="bg-white rounded-2xl p-4 sm:px-6 border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-sm" id="studentAvatar">
+                        О
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-800" id="displayStudentName">—</p>
+                        <p class="text-xs text-slate-500">Сыныбы: <span class="font-semibold text-slate-700" id="displayStudentClass">—</span></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <div class="flex-1 sm:w-40 bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                        <div id="progressBar" class="bg-gradient-to-r from-indigo-600 to-emerald-500 h-full w-0 transition-all duration-300 rounded-full"></div>
+                    </div>
+                    <span id="progressText" class="text-xs font-bold text-slate-600 whitespace-nowrap">0 / 4 орындалды</span>
+                </div>
+            </div>
+
+            <!-- QUESTION 1: Таңдау (бір дұрыс жауап) -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                        1-тапсырма • Таңдау (бір дұрыс жауап)
+                    </span>
+                    <span class="text-xs font-semibold text-slate-400">1 ұпай</span>
+                </div>
+
+                <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                    Ақпаратты қабылдау тәсіліне қарай неше түрге бөлеміз және бағдаршамның жасыл түсі қандай ақпарат түріне жатады?
+                </h3>
+
+                <div class="space-y-2.5 pt-1" id="q1Options">
+                    <!-- Option A -->
+                    <label class="flex items-start gap-3.5 p-3.5 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 cursor-pointer transition select-none">
+                        <input type="radio" name="q1" value="A" onchange="updateProgress()" class="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm sm:text-base text-slate-700 font-medium"><strong class="text-indigo-600 mr-1">A)</strong> 5 түрге бөлінеді; көру (визуалды) ақпараты</span>
+                    </label>
+                    <!-- Option B -->
+                    <label class="flex items-start gap-3.5 p-3.5 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 cursor-pointer transition select-none">
+                        <input type="radio" name="q1" value="B" onchange="updateProgress()" class="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm sm:text-base text-slate-700 font-medium"><strong class="text-indigo-600 mr-1">B)</strong> 3 түрге бөлінеді; есту (аудиалды) ақпараты</span>
+                    </label>
+                    <!-- Option C -->
+                    <label class="flex items-start gap-3.5 p-3.5 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 cursor-pointer transition select-none">
+                        <input type="radio" name="q1" value="C" onchange="updateProgress()" class="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm sm:text-base text-slate-700 font-medium"><strong class="text-indigo-600 mr-1">C)</strong> 4 түрге бөлінеді; дәм сезу ақпараты</span>
+                    </label>
+                    <!-- Option D -->
+                    <label class="flex items-start gap-3.5 p-3.5 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 cursor-pointer transition select-none">
+                        <input type="radio" name="q1" value="D" onchange="updateProgress()" class="mt-1 w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm sm:text-base text-slate-700 font-medium"><strong class="text-indigo-600 mr-1">D)</strong> 2 түрге бөлінеді; тактильді (сипап сезу) ақпараты</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- QUESTION 2: Сәйкестендіру -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
+                        <i data-lucide="git-merge" class="w-3.5 h-3.5"></i>
+                        2-тапсырма • Сәйкестендіру
+                    </span>
+                    <span class="text-xs font-semibold text-slate-400">1 ұпай</span>
+                </div>
+
+                <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                    Ақпарат түрлері мен олардың мысалдарын дұрыс сәйкестендіріңіз:
+                </h3>
+
+                <div class="space-y-3 pt-1">
+                    <!-- Pair 1 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-center p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <div class="sm:col-span-5 flex items-center gap-2.5 font-semibold text-slate-800 text-sm">
+                            <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">1</span>
+                            <span>Есту (аудиалды) ақпараты</span>
+                        </div>
+                        <div class="hidden sm:flex sm:col-span-1 justify-center text-slate-400">
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </div>
+                        <div class="sm:col-span-6">
+                            <select id="match1" onchange="updateProgress()" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none">
+                                <option value="">— Мысалды таңдаңыз —</option>
+                                <option value="lemon">Лимонның қышқылдығы</option>
+                                <option value="bell">Қоңырау үні мен әуен</option>
+                                <option value="bread">Жаңа піскен нанның жұпар иісі</option>
+                                <option value="ice">Мұздың суықтығын сезу</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pair 2 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-center p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <div class="sm:col-span-5 flex items-center gap-2.5 font-semibold text-slate-800 text-sm">
+                            <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">2</span>
+                            <span>Дәм сезу ақпараты</span>
+                        </div>
+                        <div class="hidden sm:flex sm:col-span-1 justify-center text-slate-400">
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </div>
+                        <div class="sm:col-span-6">
+                            <select id="match2" onchange="updateProgress()" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none">
+                                <option value="">— Мысалды таңдаңыз —</option>
+                                <option value="lemon">Лимонның қышқылдығы</option>
+                                <option value="bell">Қоңырау үні мен әуен</option>
+                                <option value="bread">Жаңа піскен нанның жұпар иісі</option>
+                                <option value="ice">Мұздың суықтығын сезу</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pair 3 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-center p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <div class="sm:col-span-5 flex items-center gap-2.5 font-semibold text-slate-800 text-sm">
+                            <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">3</span>
+                            <span>Тактильді (сипап сезу) ақпараты</span>
+                        </div>
+                        <div class="hidden sm:flex sm:col-span-1 justify-center text-slate-400">
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </div>
+                        <div class="sm:col-span-6">
+                            <select id="match3" onchange="updateProgress()" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none">
+                                <option value="">— Мысалды таңдаңыз —</option>
+                                <option value="lemon">Лимонның қышқылдығы</option>
+                                <option value="bell">Қоңырау үні мен әуен</option>
+                                <option value="bread">Жаңа піскен нанның жұпар иісі</option>
+                                <option value="ice">Мұздың суықтығын сезу</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Pair 4 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-center p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                        <div class="sm:col-span-5 flex items-center gap-2.5 font-semibold text-slate-800 text-sm">
+                            <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">4</span>
+                            <span>Иіс сезу ақпараты</span>
+                        </div>
+                        <div class="hidden sm:flex sm:col-span-1 justify-center text-slate-400">
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </div>
+                        <div class="sm:col-span-6">
+                            <select id="match4" onchange="updateProgress()" class="w-full p-2.5 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-700 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none">
+                                <option value="">— Мысалды таңдаңыз —</option>
+                                <option value="lemon">Лимонның қышқылдығы</option>
+                                <option value="bell">Қоңырау үні мен әуен</option>
+                                <option value="bread">Жаңа піскен нанның жұпар иісі</option>
+                                <option value="ice">Мұздың суықтығын сезу</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUESTION 3: Дұрыс / Бұрыс форматы -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold">
+                        <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+                        3-тапсырма • Дұрыс / Бұрыс форматы
+                    </span>
+                    <span class="text-xs font-semibold text-slate-400">1 ұпай</span>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-amber-50/40 border border-amber-200/60">
+                    <p class="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                        «Мәтіндік, сандық, графикалық және дыбыстық ақпараттардың барлығы ақпараттың ұсынылу (берілу) тәсілдеріне жатады.»
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <button type="button" id="btnTrue" onclick="selectTrueFalse(true)"
+                        class="py-3.5 px-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-emerald-400 text-slate-700 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2">
+                        <i data-lucide="check" class="w-5 h-5 text-emerald-600"></i>
+                        <span>Дұрыс</span>
+                    </button>
+                    <button type="button" id="btnFalse" onclick="selectTrueFalse(false)"
+                        class="py-3.5 px-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-rose-400 text-slate-700 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2">
+                        <i data-lucide="x" class="w-5 h-5 text-rose-600"></i>
+                        <span>Бұрыс</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- QUESTION 4: Қысқа жауап (1–2 сөз) -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-bold">
+                        <i data-lucide="pen-line" class="w-3.5 h-3.5"></i>
+                        4-тапсырма • Қысқа жауап (1–2 сөз)
+                    </span>
+                    <span class="text-xs font-semibold text-slate-400">1 ұпай</span>
+                </div>
+
+                <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                    Қоршаған ортадан сезім мүшелері арқылы алынатын мәліметтер мен хабарлар жиынтығы қалай аталады?
+                </h3>
+
+                <div>
+                    <input type="text" id="q4Input" oninput="updateProgress()" placeholder="Жауабыңызды 1–2 сөзбен жазыңыз..."
+                        class="w-full px-4 py-3 rounded-2xl border border-slate-300 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 outline-none transition text-base font-medium text-slate-800">
+                    <p class="text-xs text-slate-400 mt-1.5">Кеңес: Жауапты қазақ әріптерімен анық жазыңыз (мысалы: 1 сөз).</p>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-2 pb-6">
+                <button type="button" id="submitBtn" onclick="submitQuiz()"
+                    class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-700 hover:to-indigo-700 text-white font-extrabold text-base sm:text-lg shadow-xl shadow-emerald-200/70 transition transform active:scale-[0.99] flex items-center justify-center gap-2.5">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                    <span>Жауаптарды жіберу</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SCREEN 3: RESULTS & GOOGLE SHEETS SYNC STATUS
+        ========================================================== -->
+        <section id="resultScreen" class="hidden space-y-6 fade-in">
+            <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-600 to-emerald-600 p-6 sm:p-8 text-white text-center">
+                    <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md mx-auto flex items-center justify-center mb-3">
+                        <i data-lucide="award" class="w-9 h-9 text-white"></i>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold">Тест аяқталды!</h2>
+                    <p class="text-indigo-100 text-sm mt-1" id="resStudentMeta">Оқушы: —</p>
+                </div>
+
+                <div class="p-6 sm:p-8 space-y-6">
+                    <!-- Score & Time Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100 text-center">
+                            <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 block mb-1">Жалпы ұпай</span>
+                            <span class="text-3xl font-extrabold text-indigo-900" id="resScore">0 / 4</span>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-center">
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 block mb-1">Нәтиже пайызы</span>
+                            <span class="text-3xl font-extrabold text-emerald-900" id="resPercent">0%</span>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-100 text-center">
+                            <span class="text-xs font-bold uppercase tracking-wider text-amber-600 block mb-1">Жұмсалған уақыт</span>
+                            <span class="text-2xl sm:text-3xl font-extrabold text-amber-900" id="resTime">00:00</span>
+                        </div>
+                    </div>
+
+                    <!-- Google Sheets Sync Status Banner -->
+                    <div id="syncStatusBox" class="p-4 rounded-2xl border flex items-center gap-3 bg-slate-50 border-slate-200">
+                        <i id="syncIcon" data-lucide="loader-2" class="w-5 h-5 text-indigo-600 animate-spin shrink-0"></i>
+                        <div class="text-sm">
+                            <p id="syncTitle" class="font-bold text-slate-800">Нәтиже өңделуде...</p>
+                            <p id="syncDesc" class="text-xs text-slate-500">Деректер сақталуда</p>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Answer Breakdown -->
+                    <div class="space-y-3">
+                        <h4 class="text-sm font-bold uppercase tracking-wider text-slate-500">Тапсырмалар бойынша талдау</h4>
+                        <div id="reviewList" class="space-y-2.5">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                        <button onclick="resetQuiz()" class="flex-1 py-3 px-5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm transition flex items-center justify-center gap-2">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            <span>Қайта тапсыру (келесі оқушы)</span>
+                        </button>
+                        <button onclick="exportCSV()" class="py-3 px-5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold text-sm transition flex items-center justify-center gap-2">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>CSV жүктеп алу</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- =========================================================
+         TEACHER SETTINGS MODAL (GOOGLE SHEETS SETUP + HISTORY)
+    ========================================================== -->
+    <div id="teacherModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 fade-in">
+            <!-- Modal Header -->
+            <div class="sticky top-0 bg-white/95 backdrop-blur-md px-6 py-4 border-b border-slate-200 flex items-center justify-between z-10">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                        <i data-lucide="sheet" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-900">Мұғалім баптаулары (Google Кесте)</h3>
+                        <p class="text-xs text-slate-500">Нәтижелерді Google Sheets-ке автоматты жіберу баптауы</p>
+                    </div>
+                </div>
+                <button onclick="closeTeacherModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-6">
+                <!-- Step 1: Google Apps Script Web App URL Input -->
+                <div class="space-y-2">
+                    <label for="scriptUrlInput" class="block text-sm font-bold text-slate-800">
+                        Google Apps Script Web App сілтемесі (URL):
+                    </label>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec"
+                            class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none">
+                        <button onclick="saveScriptUrl()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition shrink-0">
+                            Сақтау
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500">
+                        Сілтеме сақталған соң, әрбір оқушының аты-жөні, сыныбы, ұпайы және тапсырған уақыты сіздің Google кестеңізге тікелей түседі.
+                    </p>
+                </div>
+
+                <!-- Step 2: Instructions & Copyable Apps Script Code -->
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Google Кестені 1 минутта қосу нұсқаулығы</span>
+                        <button onclick="copyAppsScript()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Кодты көшіру</span>
+                        </button>
+                    </div>
+
+                    <ol class="text-xs text-slate-700 space-y-1.5 list-decimal list-inside leading-relaxed">
+                        <li>Жаңа <strong>Google Кесте (Google Sheets)</strong> ашып, жоғарғы мәзірден <strong>Кеңейтімдер (Extensions) → Apps Script</strong> тармағын басыңыз.</li>
+                        <li>Ашылған терезедегі ескі кодты өшіріп, төмендегі кодты қойыңыз да, <strong>Сақтау</strong> белгішесін басыңыз:</li>
+                    </ol>
+
+                    <textarea id="appsScriptCode" readonly rows="8" class="w-full p-3 rounded-xl bg-slate-900 text-emerald-300 font-mono text-xs leading-relaxed outline-none select-all">function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["Уақыт белгісі", "Оқушының аты-жөні", "Сыныбы", "Ұпай", "Макс. ұпай", "Пайыз", "Жұмсалған уақыт", "Секунд", "Жауаптар"]);
+  }
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    data.timestamp, data.studentName, data.studentClass,
+    data.score, data.maxScore, data.percentage,
+    data.timeSpentFormatted, data.timeSpentSeconds, data.answersSummary
+  ]);
+  return ContentService.createTextOutput(JSON.stringify({status: "success"})).setMimeType(ContentService.MimeType.JSON);
+}</textarea>
+
+                    <p class="text-xs text-slate-700 leading-relaxed">
+                        <strong>3.</strong> Оң жақ жоғарыдағы <strong>Орналастыру (Deploy) → Жаңа орналастыру (New deployment)</strong> батырмасын басыңыз. Түрін <strong>Веб-қосымша (Web app)</strong> деп таңдап, «Кімде рұқсат бар» (Who has access) өрісін <strong>Барлығы (Anyone)</strong> деп белгілеңіз. Шыққан <strong>Web app URL</strong> сілтемесін көшіріп, жоғарыдағы өріске қойыңыз.
+                    </p>
+                </div>
+
+                <!-- Step 3: Local Submissions History & CSV Export -->
+                <div class="space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h4 class="text-sm font-bold text-slate-800">Осы құрылғыдағы нәтижелер журналы (<span id="historyCount">0</span>)</h4>
+                        <div class="flex items-center gap-2">
+                            <button onclick="exportCSV()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition">
+                                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                                <span>Excel / CSV жүктеу</span>
+                            </button>
+                            <button onclick="clearHistory()" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-semibold transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                <span>Тазалау</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-200 rounded-2xl overflow-hidden">
+                        <div class="overflow-x-auto max-h-48">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Оқушы</th>
+                                        <th class="px-3 py-2.5">Сынып</th>
+                                        <th class="px-3 py-2.5">Ұпай</th>
+                                        <th class="px-3 py-2.5">Уақыт</th>
+                                        <th class="px-3 py-2.5">Күйі</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody" class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td colspan="5" class="px-3 py-6 text-center text-slate-400">Әзірге тапсырылған нәтижелер жоқ</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         JAVASCRIPT LOGIC: TIMER, GRADING & GOOGLE SHEETS SYNC
+    ========================================================== -->
+    <script>
+        // Initialize Lucide icons on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            updateConnectionIndicator();
+            renderHistoryTable();
+        });
+
+        // Application State
+        let timerInterval = null;
+        let startTime = null;
+        let elapsedSeconds = 0;
+        let q3Selection = null; // true | false | null
+
+        // Storage Keys
+        const STORAGE_URL_KEY = "akparat_quiz_gsheet_url";
+        const STORAGE_HISTORY_KEY = "akparat_quiz_results_history";
+
+        /**
+         * Returns active Google Apps Script URL (from localStorage or hardcoded constant)
+         */
+        function getScriptUrl() {
+            const saved = localStorage.getItem(STORAGE_URL_KEY);
+            if (saved && saved.trim().startsWith("http")) {
+                return saved.trim();
+            }
+            return (typeof DEFAULT_GOOGLE_SCRIPT_URL === "string" && DEFAULT_GOOGLE_SCRIPT_URL.trim().startsWith("http"))
+                ? DEFAULT_GOOGLE_SCRIPT_URL.trim()
+                : "";
+        }
+
+        /**
+         * Updates the small status indicator dot on the teacher settings button
+         */
+        function updateConnectionIndicator() {
+            const dot = document.getElementById("connectionDot");
+            const url = getScriptUrl();
+            if (url) {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200";
+                dot.title = "Google Кесте қосылған";
+            } else {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+                dot.title = "Google Кесте сілтемесі орнатылмаған";
+            }
+        }
+
+        /**
+         * Shows a non-intrusive toast notification
+         */
+        function showToast(message, type = "info") {
+            const box = document.getElementById("toastBox");
+            const msg = document.getElementById("toastMessage");
+            const icon = document.getElementById("toastIcon");
+
+            msg.textContent = message;
+            if (type === "success") {
+                icon.setAttribute("data-lucide", "check-circle");
+                icon.className = "w-5 h-5 text-emerald-400 shrink-0";
+            } else if (type === "error") {
+                icon.setAttribute("data-lucide", "alert-circle");
+                icon.className = "w-5 h-5 text-rose-400 shrink-0";
+            } else {
+                icon.setAttribute("data-lucide", "info");
+                icon.className = "w-5 h-5 text-indigo-400 shrink-0";
+            }
+            lucide.createIcons();
+
+            box.classList.remove("hidden");
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                box.classList.add("hidden");
+            }, 3500);
+        }
+
+        /**
+         * Formats seconds into MM:SS
+         */
+        function formatMMSS(totalSec) {
+            const mins = Math.floor(totalSec / 60);
+            const secs = totalSec % 60;
+            return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+        }
+
+        /**
+         * Formats seconds into human-readable Kazakh duration (e.g., "1 мин 24 сек")
+         */
+        function formatKazakhDuration(totalSec) {
+            const mins = Math.floor(totalSec / 60);
+            const secs = totalSec % 60;
+            if (mins === 0) return `${secs} сек`;
+            return `${mins} мин ${secs} сек`;
+        }
+
+        /**
+         * Starts the quiz and live timer
+         */
+        function startQuiz(event) {
+            event.preventDefault();
+            const name = document.getElementById("studentName").value.trim();
+            const sClass = document.getElementById("studentClass").value.trim();
+
+            if (!name || !sClass) {
+                showToast("Аты-жөніңіз бен сыныбыңызды енгізіңіз!", "error");
+                return;
+            }
+
+            // Populate student header
+            document.getElementById("displayStudentName").textContent = name;
+            document.getElementById("displayStudentClass").textContent = sClass;
+            document.getElementById("studentAvatar").textContent = name.charAt(0).toUpperCase();
+
+            // Switch screens
+            document.getElementById("startScreen").classList.add("hidden");
+            document.getElementById("resultScreen").classList.add("hidden");
+            document.getElementById("quizScreen").classList.remove("hidden");
+
+            // Show and start timer
+            const timerBadge = document.getElementById("timerBadge");
+            timerBadge.classList.remove("hidden");
+            timerBadge.classList.add("flex");
+
+            elapsedSeconds = 0;
+            startTime = Date.now();
+            document.getElementById("timerDisplay").textContent = "00:00";
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById("timerDisplay").textContent = formatMMSS(elapsedSeconds);
+            }, 1000);
+
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        /**
+         * Handles Question 3 True/False toggle selection
+         */
+        function selectTrueFalse(val) {
+            q3Selection = val;
+            const btnTrue = document.getElementById("btnTrue");
+            const btnFalse = document.getElementById("btnFalse");
+
+            if (val === true) {
+                btnTrue.className = "py-3.5 px-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 text-emerald-800 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-sm";
+                btnFalse.className = "py-3.5 px-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-rose-300 text-slate-600 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2";
+            } else {
+                btnFalse.className = "py-3.5 px-4 rounded-2xl border-2 border-rose-500 bg-rose-50 text-rose-800 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-sm";
+                btnTrue.className = "py-3.5 px-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-emerald-300 text-slate-600 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2";
+            }
+            updateProgress();
+        }
+
+        /**
+         * Updates the progress bar as the student answers questions
+         */
+        function updateProgress() {
+            let answered = 0;
+            if (document.querySelector('input[name="q1"]:checked')) answered++;
+            if (
+                document.getElementById("match1").value &&
+                document.getElementById("match2").value &&
+                document.getElementById("match3").value &&
+                document.getElementById("match4").value
+            ) answered++;
+            if (q3Selection !== null) answered++;
+            if (document.getElementById("q4Input").value.trim().length > 0) answered++;
+
+            const pct = (answered / 4) * 100;
+            document.getElementById("progressBar").style.width = `${pct}%`;
+            document.getElementById("progressText").textContent = `${answered} / 4 орындалды`;
+        }
+
+        /**
+         * Evaluates answers, stops timer, displays results, and posts to Google Sheets
+         */
+        async function submitQuiz() {
+            // Check if all 4 tasks are answered
+            const q1El = document.querySelector('input[name="q1"]:checked');
+            const m1 = document.getElementById("match1").value;
+            const m2 = document.getElementById("match2").value;
+            const m3 = document.getElementById("match3").value;
+            const m4 = document.getElementById("match4").value;
+            const q4Raw = document.getElementById("q4Input").value.trim();
+
+            if (!q1El || !m1 || !m2 || !m3 || !m4 || q3Selection === null || !q4Raw) {
+                showToast("Барлық 4 тапсырмаға жауап беріңіз!", "error");
+                return;
+            }
+
+            // Stop timer
+            clearInterval(timerInterval);
+            elapsedSeconds = Math.max(1, Math.floor((Date.now() - startTime) / 1000));
+            const formattedDuration = formatKazakhDuration(elapsedSeconds);
+            const mmss = formatMMSS(elapsedSeconds);
+
+            // Grade Question 1 (Correct: A)
+            const q1Correct = q1El.value === "A";
+
+            // Grade Question 2 (Correct: 1->bell, 2->lemon, 3->ice, 4->bread)
+            const q2Correct = (m1 === "bell" && m2 === "lemon" && m3 === "ice" && m4 === "bread");
+
+            // Grade Question 3 (Correct: true)
+            const q3Correct = q3Selection === true;
+
+            // Grade Question 4 (Correct: "ақпарат" or "ақпараттар", case-insensitive)
+            const normalizedQ4 = q4Raw.toLowerCase().replace(/[.,!?;:"'«»]/g, "").trim();
+            const q4Correct = (normalizedQ4 === "ақпарат" || normalizedQ4 === "ақпараттар");
+
+            const score = (q1Correct ? 1 : 0) + (q2Correct ? 1 : 0) + (q3Correct ? 1 : 0) + (q4Correct ? 1 : 0);
+            const maxScore = 4;
+            const percentage = Math.round((score / maxScore) * 100);
+
+            const studentName = document.getElementById("studentName").value.trim();
+            const studentClass = document.getElementById("studentClass").value.trim();
+            const timestamp = new Date().toLocaleString("kk-KZ");
+            const answersSummary = `1:${q1Correct ? "✓" : "✗"} | 2:${q2Correct ? "✓" : "✗"} | 3:${q3Correct ? "✓" : "✗"} | 4:${q4Correct ? "✓" : "✗"} (${q4Raw})`;
+
+            // Update Result UI
+            document.getElementById("quizScreen").classList.add("hidden");
+            document.getElementById("timerBadge").classList.add("hidden");
+            document.getElementById("timerBadge").classList.remove("flex");
+            document.getElementById("resultScreen").classList.remove("hidden");
+
+            document.getElementById("resStudentMeta").textContent = `${studentName} • ${studentClass} сыныбы`;
+            document.getElementById("resScore").textContent = `${score} / ${maxScore}`;
+            document.getElementById("resPercent").textContent = `${percentage}%`;
+            document.getElementById("resTime").textContent = `${formattedDuration} (${mmss})`;
+
+            // Render Detailed Breakdown
+            const reviews = [
+                {
+                    title: "1-тапсырма. Таңдау тесті",
+                    ok: q1Correct,
+                    userAns: `Таңдалған нұсқа: ${q1El.value}`,
+                    correctAns: "A) 5 түрге бөлінеді; көру (визуалды) ақпараты"
+                },
+                {
+                    title: "2-тапсырма. Сәйкестендіру",
+                    ok: q2Correct,
+                    userAns: q2Correct ? "Барлық 4 жұп дұрыс сәйкестендірілді" : "Кейбір жұптар қате сәйкестендірілген",
+                    correctAns: "1→Қоңырау үні, 2→Лимон қышқылдығы, 3→Мұз суықтығы, 4→Нан иісі"
+                },
+                {
+                    title: "3-тапсырма. Дұрыс / Бұрыс",
+                    ok: q3Correct,
+                    userAns: q3Selection ? "Дұрыс" : "Бұрыс",
+                    correctAns: "Дұрыс"
+                },
+                {
+                    title: "4-тапсырма. Қысқа жауап",
+                    ok: q4Correct,
+                    userAns: q4Raw,
+                    correctAns: "Ақпарат"
+                }
+            ];
+
+            const reviewList = document.getElementById("reviewList");
+            reviewList.innerHTML = reviews.map(item => `
+                <div class="p-3.5 rounded-2xl border ${item.ok ? "bg-emerald-50/50 border-emerald-200" : "bg-rose-50/50 border-rose-200"} flex items-start gap-3">
+                    <div class="mt-0.5 ${item.ok ? "text-emerald-600" : "text-rose-600"}">
+                        <i data-lucide="${item.ok ? "check-circle-2" : "x-circle"}" class="w-5 h-5"></i>
+                    </div>
+                    <div class="text-xs sm:text-sm space-y-0.5">
+                        <p class="font-bold text-slate-900">${item.title}</p>
+                        <p class="text-slate-600">Сіздің жауабыңыз: <span class="font-semibold">${item.userAns}</span></p>
+                        ${!item.ok ? `<p class="text-emerald-700 font-semibold">Дұрыс жауап: ${item.correctAns}</p>` : ""}
+                    </div>
+                </div>
+            `).join("");
+            lucide.createIcons();
+
+            // Prepare Payload for Google Sheets
+            const payload = {
+                timestamp,
+                studentName,
+                studentClass,
+                score,
+                maxScore,
+                percentage: `${percentage}%`,
+                timeSpentFormatted: formattedDuration,
+                timeSpentSeconds: elapsedSeconds,
+                answersSummary
+            };
+
+            // Send to Google Sheets & Save Locally
+            await sendToGoogleSheets(payload);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        /**
+         * Sends submission payload to Google Apps Script Web App URL and saves local backup
+         */
+        async function sendToGoogleSheets(payload) {
+            const scriptUrl = getScriptUrl();
+            const statusBox = document.getElementById("syncStatusBox");
+            const syncIcon = document.getElementById("syncIcon");
+            const syncTitle = document.getElementById("syncTitle");
+            const syncDesc = document.getElementById("syncDesc");
+
+            let synced = false;
+
+            if (scriptUrl) {
+                try {
+                    await fetch(scriptUrl, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: {
+                            "Content-Type": "text/plain;charset=utf-8"
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    synced = true;
+
+                    statusBox.className = "p-4 rounded-2xl border flex items-center gap-3 bg-emerald-50 border-emerald-200";
+                    syncIcon.setAttribute("data-lucide", "cloud-check");
+                    syncIcon.className = "w-6 h-6 text-emerald-600 shrink-0";
+                    syncTitle.textContent = "Нәтиже мұғалімнің Google Кестесіне сәтті жіберілді!";
+                    syncDesc.textContent = `Оқушы: ${payload.studentName} • Ұпай: ${payload.score}/${payload.maxScore} • Уақыт: ${payload.timeSpentFormatted}`;
+                } catch (err) {
+                    console.error("Google Sheets sync error:", err);
+                    statusBox.className = "p-4 rounded-2xl border flex items-center gap-3 bg-rose-50 border-rose-200";
+                    syncIcon.setAttribute("data-lucide", "cloud-off");
+                    syncIcon.className = "w-6 h-6 text-rose-600 shrink-0";
+                    syncTitle.textContent = "Google Кестеге жіберу кезінде қате шықты";
+                    syncDesc.textContent = "Интернет байланысын тексеріңіз. Нәтиже осы құрылғыда сақталды (CSV арқылы жүктеуге болады).";
+                }
+            } else {
+                statusBox.className = "p-4 rounded-2xl border flex items-center gap-3 bg-amber-50 border-amber-200";
+                syncIcon.setAttribute("data-lucide", "alert-triangle");
+                syncIcon.className = "w-6 h-6 text-amber-600 shrink-0";
+                syncTitle.textContent = "Нәтиже құрылғы жадына сақталды (Google Кесте қосылмаған)";
+                syncDesc.textContent = "Мұғалім жоғарғы оң жақтағы «Мұғалім баптаулары» арқылы Google Кесте сілтемесін қоса алады.";
+            }
+
+            lucide.createIcons();
+
+            // Save to local history
+            const history = JSON.parse(localStorage.getItem(STORAGE_HISTORY_KEY) || "[]");
+            history.unshift({ ...payload, synced });
+            localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify(history));
+            renderHistoryTable();
+        }
+
+        /**
+         * Resets quiz for the next student
+         */
+        function resetQuiz() {
+            document.getElementById("studentName").value = "";
+            document.getElementById("studentClass").value = "";
+            document.querySelectorAll('input[name="q1"]').forEach(el => el.checked = false);
+            ["match1", "match2", "match3", "match4"].forEach(id => document.getElementById(id).value = "");
+            q3Selection = null;
+            document.getElementById("btnTrue").className = "py-3.5 px-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-emerald-400 text-slate-700 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2";
+            document.getElementById("btnFalse").className = "py-3.5 px-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-rose-400 text-slate-700 font-bold text-sm sm:text-base transition flex items-center justify-center gap-2";
+            document.getElementById("q4Input").value = "";
+
+            document.getElementById("resultScreen").classList.add("hidden");
+            document.getElementById("startScreen").classList.remove("hidden");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        /* =========================================================
+           TEACHER MODAL & CSV EXPORT FUNCTIONS
+        ========================================================= */
+        function openTeacherModal() {
+            document.getElementById("scriptUrlInput").value = getScriptUrl();
+            renderHistoryTable();
+            document.getElementById("teacherModal").classList.remove("hidden");
+        }
+
+        function closeTeacherModal() {
+            document.getElementById("teacherModal").classList.add("hidden");
+        }
+
+        function saveScriptUrl() {
+            const val = document.getElementById("scriptUrlInput").value.trim();
+            if (val && !val.startsWith("https://script.google.com/")) {
+                showToast("Сілтеме https://script.google.com/... деп басталуы тиіс", "error");
+                return;
+            }
+            localStorage.setItem(STORAGE_URL_KEY, val);
+            updateConnectionIndicator();
+            showToast(val ? "Google Кесте сілтемесі сақталды!" : "Сілтеме өшірілді", "success");
+        }
+
+        function copyAppsScript() {
+            const textarea = document.getElementById("appsScriptCode");
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                document.execCommand("copy");
+                showToast("Apps Script коды алмасу буферіне көшірілді!", "success");
+            } catch (err) {
+                showToast("Көшіру сәтсіз аяқталды, қолмен көшіріңіз", "error");
+            }
+        }
+
+        function renderHistoryTable() {
+            const history = JSON.parse(localStorage.getItem(STORAGE_HISTORY_KEY) || "[]");
+            document.getElementById("historyCount").textContent = history.length;
+            const tbody = document.getElementById("historyTableBody");
+
+            if (history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-3 py-6 text-center text-slate-400">Әзірге тапсырылған нәтижелер жоқ</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = history.map(row => `
+                <tr class="hover:bg-slate-50">
+                    <td class="px-3 py-2.5 font-semibold text-slate-800">${row.studentName}</td>
+                    <td class="px-3 py-2.5 text-slate-600">${row.studentClass}</td>
+                    <td class="px-3 py-2.5 font-bold text-indigo-600">${row.score}/${row.maxScore} (${row.percentage})</td>
+                    <td class="px-3 py-2.5 text-slate-600">${row.timeSpentFormatted}</td>
+                    <td class="px-3 py-2.5">
+                        ${row.synced
+                            ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">Google Кесте</span>`
+                            : `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700">Жергілікті</span>`
+                        }
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        function clearHistory() {
+            localStorage.removeItem(STORAGE_HISTORY_KEY);
+            renderHistoryTable();
+            showToast("Журнал тазаланды", "info");
+        }
+
+        function exportCSV() {
+            const history = JSON.parse(localStorage.getItem(STORAGE_HISTORY_KEY) || "[]");
+            if (history.length === 0) {
+                showToast("Жүктеу үшін нәтижелер жоқ", "error");
+                return;
+            }
+
+            const headers = ["Уақыт белгісі", "Оқушының аты-жөні", "Сыныбы", "Ұпай", "Макс. ұпай", "Пайыз", "Жұмсалған уақыт", "Секунд", "Жауаптар"];
+            const csvRows = [
+                headers.join(","),
+                ...history.map(r => [
+                    `"${r.timestamp}"`,
+                    `"${r.studentName.replace(/"/g, '""')}"`,
+                    `"${r.studentClass.replace(/"/g, '""')}"`,
+                    r.score,
+                    r.maxScore,
+                    `"${r.percentage}"`,
+                    `"${r.timeSpentFormatted}"`,
+                    r.timeSpentSeconds,
+                    `"${r.answersSummary}"`
+                ].join(","))
+            ];
+
+            // Add UTF-8 BOM so Cyrillic characters open cleanly in Excel / Google Sheets
+            const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `akparat_test_natizheleri_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("CSV файлы жүктелді!", "success");
+        }
+    </script>
+</body>
+</html>
